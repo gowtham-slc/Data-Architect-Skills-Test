@@ -1,1 +1,1 @@
-# Data-Architect-Skills-Test
+# Data Architect Skills Test
