@@ -146,13 +146,20 @@ If there’s any overlap, I’d toss in ```dropDuplicates()``` in the Glue PySpa
 
 #### 3. Draft email to stakeholders:
 ***Subject:*** Update on Overnight Glue Job Failure - Billing Exceptions Report Impacted
+
 Hi Team,
 I wanted to give you a quick heads-up on an issue we hit this morning. The overnight AWS Glue job failed to load data into Redshift, leaving the "Billing Exceptions" report on our dashboards blank. This affects visibility into yesterday’s (August 19, 2025) billing metrics, but other reports are still running fine.
+
 ***Impact:*** This could delay spotting billing anomalies by 1-2 days if not resolved soon, potentially impacting follow-up actions. No data loss occurred—the S3 source files are intact.
+
 ***Resolution:*** I’ve already dug into the Glue job logs in CloudWatch and confirmed the failure (likely a timeout or S3 file issue). I’m rerunning the job with targeted parameters to recover the missing data, testing it in dev first to avoid hiccups. I’ll stage the data in a temp Redshift table and use a MERGE to prevent duplicates, with validation checks before refreshing the dashboards. Expect full recovery by 6:00 PM today, barring any surprises—I’ll keep you posted if it shifts.
+
 Please let me know if you have questions or want to jump on a quick call. I’ll follow up with a status update once it’s resolved.
+
 Best,
+
 Sai Gowtham Yanala
+
 Data Architect
 ## Section 3: Business & Team Collaboration
 #### 1. Three clarifying questions:
@@ -162,7 +169,9 @@ Data Architect
 
 #### 2. Jira story:
 ***Title:*** Weekly Denied Claims Summary by Provider Group and Region
+
 ***Description:*** Business user want to see weekly summaries of denied insurance claims broken down by provider group and region, so that user can identify denial trends and address root causes effectively.
+
 ***Acceptance Criteria:***
 1. The report/dashboard should display weekly aggregated counts and/or amounts of denied claims, grouped by provider group and region, for the requested date range.
 2. The output should be available in the preferred format (Excel extract or Tableau dashboard) as confirmed by the business user, and must refresh weekly with updated data.
@@ -185,7 +194,7 @@ Data Architect
 
 **c. Uses secure credential handling:** The pipeline integrates Secrets Manager across all environments—Dev, Stage, and Prod. Credentials for SQL Server, S3 access, or other services are securely stored and retrieved during deployment and runtime. The diagram shows Secrets Manager linked to Lambda, SQL Server, and other components, ensuring sensitive data (e.g., database passwords) is handled securely, which is critical for a healthcare data pipeline.
 
-**d. Sends alerts on failure:** Failure points are marked with warning symbols (⚠️) across CI, CD, and the environment stages (Dev, Stage, Prod), with the Slack logo connected via arrows. This indicates that on any failure—be it a test failure in CI, a deployment issue in CD, or an environment-specific problem—alerts are sent to Slack. This setup uses Jenkins plugins (e.g., Slack Notification) to notify the team in real-time, ensuring quick response to issues like a failed ETL job or deployment.
+**d. Sends alerts on failure:** Failure across CI, CD, and the environment stages (Dev, Stage, Prod) are sent to Slack. This setup uses to notify the team in real-time, ensuring quick response to issues like a failed ETL job or deployment.
 
 <p align="center">
   <img src="CICD%20Arch.jpg" alt="My Diagram" width="600">
@@ -256,7 +265,7 @@ ORDER BY MissedAppointments DESC;
 CREATE NONCLUSTERED INDEX IX_Appointments_Missed
 ON Appointments (Status, AppointmentDate, ProviderID);
 ```
-The index prioritizes Status for selectivity (Missed is a small subset), followed by AppointmentDate for range queries and ProviderID for joins, minimizing table scans on SQL Server (AWS RDS). For datasets exceeding 50 million rows, I’d partition the Appointments table by AppointmentDate (e.g., monthly partitions) to reduce scanned data, potentially cutting query time by 50%. I’d coordinate with the ETL team to align partitioning with nightly data loads, minimizing overhead. Alternatively, a filtered index on Status = 'Missed' could reduce index size further:
+The index prioritizes Status for selectivity (Missed is a small subset), followed by AppointmentDate for range queries and ProviderID for joins, minimizing table scans on SQL Server (AWS RDS). I’d coordinate with the ETL team to align partitioning with nightly data loads, minimizing overhead. Alternatively, a filtered index on Status = 'Missed' could reduce index size further:
 ```
 CREATE NONCLUSTERED INDEX IX_Appointments_Missed_Filtered
 ON Appointments (AppointmentDate, ProviderID)
@@ -317,7 +326,7 @@ Explain a FULL OUTER JOIN in SQL as if you're mentoring a beginner analyst who's
 
 - **Error handling approach**: Invalid rows (e.g., missing patient_id or malformed dates) are skipped, logged to a file, and uploaded to S3. The pipeline uses try-except blocks for connection errors, with retries, and Slack alerts notify the team of failures across CI/CD and environments, ensuring quick resolution.
 
-- **Key assumptions**: Files are CSV with consistent headers; data volume is manageable within 15 minutes for Lambda, escalating to Step Functions or EC2 if needed; SQL Server credentials are securely stored in Secrets Manager; daily runs handle less than 1M rows unless scaled with EC2.
+- **Key assumptions**: Files are CSV with consistent headers; data volume is manageable within 15 minutes for Lambda, escalating to Step Functions or EC2 if needed; SQL Server credentials are securely stored in Secrets Manager.
 
 ## Bonus Section: Python + SQL Integration Challenge
 ```
